@@ -12,10 +12,14 @@ class SearchViewModel: ObservableObject {
     @Published var savedApps: [AppItem] = []
     @Published var suggestedApps: [AppItem] = []
     @Published var showAddAppSheet: Bool = false
+    @Published var searchHistory: [String] = []
     
     private var cancellables = Set<AnyCancellable>()
+    private let historyKey = "searchHistory"
+    private let maxHistoryCount = 10
     
     init() {
+        loadSearchHistory()
         $searchText
             .debounce(for: .milliseconds(150), scheduler: RunLoop.main)
             .sink { [weak self] text in self?.updateSuggestions(for: text) }
@@ -60,6 +64,11 @@ class SearchViewModel: ObservableObject {
     }
     
     func openApp(_ app: AppItem) {
+        // 保存搜索历史
+        if !searchText.isEmpty {
+            addToHistory(searchText)
+        }
+        
         guard let url = app.searchURL(for: searchText) else {
             if let appURL = URL(string: app.urlScheme), UIApplication.shared.canOpenURL(appURL) {
                 UIApplication.shared.open(appURL)
@@ -73,6 +82,44 @@ class SearchViewModel: ObservableObject {
     
     func addApp(_ app: AppItem) { savedApps.append(app) }
     func deleteApps(at offsets: IndexSet) { savedApps.remove(atOffsets: offsets) }
+    
+    // MARK: - Search History
+    
+    func addToHistory(_ query: String) {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        // 移除重复项
+        searchHistory.removeAll { $0 == trimmed }
+        // 添加到开头
+        searchHistory.insert(trimmed, at: 0)
+        // 限制数量
+        if searchHistory.count > maxHistoryCount {
+            searchHistory = Array(searchHistory.prefix(maxHistoryCount))
+        }
+        // 保存
+        saveSearchHistory()
+    }
+    
+    func removeFromHistory(_ query: String) {
+        searchHistory.removeAll { $0 == query }
+        saveSearchHistory()
+    }
+    
+    func clearHistory() {
+        searchHistory.removeAll()
+        saveSearchHistory()
+    }
+    
+    private func saveSearchHistory() {
+        UserDefaults.standard.set(searchHistory, forKey: historyKey)
+    }
+    
+    private func loadSearchHistory() {
+        if let history = UserDefaults.standard.stringArray(forKey: historyKey) {
+            searchHistory = history
+        }
+    }
 }
 
 struct AppItem: Identifiable, Codable, Equatable {

@@ -65,7 +65,24 @@ struct ContentView: View {
                 
                 Spacer()
                 
-                // 底部：搜索推荐（有输入时显示）
+                // 搜索历史（仅在搜索栏为空且有历史记录时显示）
+                if viewModel.searchText.isEmpty && !viewModel.searchHistory.isEmpty {
+                    SearchHistoryView(
+                        history: viewModel.searchHistory,
+                        onSelect: { query in
+                            viewModel.searchText = query
+                        },
+                        onDelete: { query in
+                            viewModel.removeFromHistory(query)
+                        },
+                        onClear: {
+                            viewModel.clearHistory()
+                        }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                
+                // 搜索推荐（有输入时显示）
                 if !viewModel.searchText.isEmpty {
                     SuggestedAppsView(
                         apps: viewModel.suggestedApps,
@@ -120,6 +137,85 @@ struct LargeSearchBar: View {
                 .stroke(isFocused ? Color.blue.opacity(0.5) : Color(.systemGray4), lineWidth: isFocused ? 2 : 1)
         )
         .shadow(color: isFocused ? Color.blue.opacity(0.1) : Color.clear, radius: 8, x: 0, y: 4)
+    }
+}
+
+// MARK: - 搜索历史视图
+struct SearchHistoryView: View {
+    let history: [String]
+    let onSelect: (String) -> Void
+    let onDelete: (String) -> Void
+    let onClear: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("最近搜索")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Button(action: onClear) {
+                    Text("清除")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                }
+            }
+            .padding(.horizontal)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(history, id: \.self) { query in
+                        HistoryTag(query: query, onSelect: {
+                            onSelect(query)
+                        }, onDelete: {
+                            onDelete(query)
+                        })
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+        .padding(.vertical, 16)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(20, corners: [.topLeft, .topRight])
+    }
+}
+
+struct HistoryTag: View {
+    let query: String
+    let onSelect: () -> Void
+    let onDelete: () -> Void
+    
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 6) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                
+                Text(query)
+                    .font(.system(size: 15))
+                    .lineLimit(1)
+                
+                Button(action: onDelete) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .frame(width: 16, height: 16)
+                        .background(Color(.systemGray5))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.systemBackground))
+            .cornerRadius(8)
+            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
