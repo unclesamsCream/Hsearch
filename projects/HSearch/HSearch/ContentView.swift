@@ -15,16 +15,44 @@ struct ContentView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
+                // 顶部工具栏
+                HStack {
+                    Spacer()
+                    Button(action: { viewModel.showAddAppSheet = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                
                 // 主搜索区域 - 居中
                 Spacer()
                 
-                VStack(spacing: 24) {
+                VStack(spacing: 20) {
+                    // App 图标
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color.blue.gradient)
+                            .frame(width: 80, height: 80)
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 36, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .shadow(color: .blue.opacity(0.3), radius: 12, x: 0, y: 8)
+                    
+                    // App 名称
+                    Text("HSearch")
+                        .font(.system(size: 28, weight: .bold))
+                    
                     // 大搜索栏
                     LargeSearchBar(
                         text: $viewModel.searchText,
                         isFocused: $isSearchFocused
                     )
                     .padding(.horizontal, 24)
+                    .padding(.top, 8)
                     
                     // 搜索提示文字
                     if viewModel.searchText.isEmpty {
@@ -49,18 +77,7 @@ struct ContentView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 
-                // 底部：快捷应用网格
-                QuickAppsGrid(
-                    apps: viewModel.savedApps,
-                    onAppTap: { app in
-                        viewModel.openApp(app)
-                    },
-                    onAddTap: {
-                        viewModel.showAddAppSheet = true
-                    }
-                )
-                .padding(.horizontal)
-                .padding(.bottom, 16)
+                Spacer(minLength: 40)
             }
         }
         .sheet(isPresented: $viewModel.showAddAppSheet) {
@@ -113,14 +130,14 @@ struct SuggestedAppsView: View {
     let onAppTap: (AppItem) -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("搜索 \"\(searchText)\" 到...")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .padding(.horizontal)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 20) {
+                HStack(spacing: 24) {
                     ForEach(apps.prefix(5)) { app in
                         SuggestedAppButton(app: app) { onAppTap(app) }
                     }
@@ -128,8 +145,9 @@ struct SuggestedAppsView: View {
                 .padding(.horizontal)
             }
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
         .background(Color(.secondarySystemBackground))
+        .cornerRadius(20, corners: [.topLeft, .topRight])
     }
 }
 
@@ -139,103 +157,44 @@ struct SuggestedAppButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ZStack {
                     Circle()
                         .fill(app.color.opacity(0.15))
-                        .frame(width: 56, height: 56)
+                        .frame(width: 64, height: 64)
                     Image(systemName: app.iconName)
-                        .font(.system(size: 24))
+                        .font(.system(size: 28))
                         .foregroundColor(app.color)
                 }
                 Text(app.name)
-                    .font(.caption)
+                    .font(.system(size: 14))
                     .foregroundColor(.primary)
                     .lineLimit(1)
             }
-            .frame(width: 72)
+            .frame(width: 80)
         }
         .buttonStyle(PlainButtonStyle())
     }
 }
 
-// MARK: - 快捷应用网格
-struct QuickAppsGrid: View {
-    let apps: [AppItem]
-    let onAppTap: (AppItem) -> Void
-    let onAddTap: () -> Void
+// MARK: - Corner Radius Extension
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
     
-    private let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("快捷应用")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 4)
-            
-            LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(apps.prefix(7)) { app in
-                    QuickAppButton(app: app) { onAppTap(app) }
-                }
-                
-                // 添加按钮
-                Button(action: onAddTap) {
-                    VStack(spacing: 8) {
-                        ZStack {
-                            Circle()
-                                .fill(Color(.systemGray5))
-                                .frame(width: 56, height: 56)
-                            Image(systemName: "plus")
-                                .font(.system(size: 24))
-                                .foregroundColor(.secondary)
-                        }
-                        Text("添加")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                    .frame(width: 72)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
         )
-    }
-}
-
-struct QuickAppButton: View {
-    let app: AppItem
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(app.color.opacity(0.15))
-                        .frame(width: 56, height: 56)
-                    Image(systemName: app.iconName)
-                        .font(.system(size: 24))
-                        .foregroundColor(app.color)
-                }
-                Text(app.name)
-                    .font(.caption)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-            }
-            .frame(width: 72)
-        }
-        .buttonStyle(PlainButtonStyle())
+        return Path(path.cgPath)
     }
 }
 
