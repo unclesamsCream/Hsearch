@@ -84,13 +84,23 @@ struct ContentView: View {
                 
                 // 搜索推荐（有输入时显示）
                 if !viewModel.searchText.isEmpty {
-                    SuggestedAppsView(
-                        apps: viewModel.suggestedApps,
-                        searchText: viewModel.searchText,
-                        onAppTap: { app in
-                            viewModel.openApp(app)
+                    VStack(spacing: 0) {
+                        // 显示分类结果
+                        if let classification = viewModel.currentClassification,
+                           classification.type != .unknown {
+                            ClassificationBadge(classification: classification)
+                                .padding(.horizontal)
+                                .padding(.top, 8)
                         }
-                    )
+                        
+                        SuggestedAppsView(
+                            apps: viewModel.suggestedApps,
+                            searchText: viewModel.searchText,
+                            onAppTap: { app in
+                                viewModel.openApp(app)
+                            }
+                        )
+                    }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 
@@ -270,6 +280,36 @@ struct SuggestedAppButton: View {
             .frame(width: 80)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - 分类徽章
+struct ClassificationBadge: View {
+    let classification: ClassificationResult
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: classification.type.iconName)
+                .font(.system(size: 12))
+            Text("识别为\(classification.type.rawValue)")
+                .font(.system(size: 13, weight: .medium))
+            if classification.confidence < 1.0 {
+                Text("(\(Int(classification.confidence * 100))%)")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            Text(classification.source.rawValue)
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(Color.blue.opacity(0.1))
+        )
+        .foregroundColor(.blue)
     }
 }
 

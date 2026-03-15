@@ -14,9 +14,13 @@ class SearchViewModel: ObservableObject {
     @Published var showAddAppSheet: Bool = false
     @Published var searchHistory: [String] = []
     
+    // 实体分类结果
+    @Published var currentClassification: ClassificationResult?
+    
     private var cancellables = Set<AnyCancellable>()
     private let historyKey = "searchHistory"
     private let maxHistoryCount = 10
+    private let classifier = EntityClassifier.shared
     
     init() {
         loadSearchHistory()
@@ -29,20 +33,44 @@ class SearchViewModel: ObservableObject {
     
     private func loadDefaultApps() {
         savedApps = [
+            // 地图导航
+            AppItem(id: "amap", name: "高德地图", iconName: "map.fill", color: .blue, urlScheme: "iosamap://", searchUrlTemplate: "iosamap://path?sourceApplication=HSearch&dlat=&dlon=&dname={query}&dev=0&t=0"),
+            AppItem(id: "baidumap", name: "百度地图", iconName: "map.fill", color: .green, urlScheme: "baidumap://", searchUrlTemplate: "baidumap://map/search?query={query}"),
+            AppItem(id: "applemap", name: "地图", iconName: "map.fill", color: .orange, urlScheme: "http://maps.apple.com/", searchUrlTemplate: "http://maps.apple.com/?q={query}"),
+            
+            // 购物
             AppItem(id: "taobao", name: "淘宝", iconName: "bag.fill", color: .orange, urlScheme: "taobao://", searchUrlTemplate: "taobao://s.taobao.com/search?q={query}"),
-            AppItem(id: "jd", name: "京东", iconName: "cart.fill", color: .red, urlScheme: "openapp.jdmobile://", searchUrlTemplate: nil),
-            AppItem(id: "xiaohongshu", name: "小红书", iconName: "book.fill", color: .red, urlScheme: "xhsdiscover://", searchUrlTemplate: nil),
-            AppItem(id: "douyin", name: "抖音", iconName: "play.circle.fill", color: .black, urlScheme: "snssdk1128://", searchUrlTemplate: nil),
-            AppItem(id: "wechat", name: "微信", iconName: "message.fill", color: .green, urlScheme: "weixin://", searchUrlTemplate: nil),
+            AppItem(id: "jd", name: "京东", iconName: "cart.fill", color: .red, urlScheme: "openapp.jdmobile://", searchUrlTemplate: "openapp.jdmobile://virtual?params={\"des\":\"productList\",\"keyWord\":\"{query}\"}"),
+            AppItem(id: "pdd", name: "拼多多", iconName: "bag.fill", color: .red, urlScheme: "pinduoduo://", searchUrlTemplate: nil),
+            
+            // 社交/内容
+            AppItem(id: "xiaohongshu", name: "小红书", iconName: "book.fill", color: .red, urlScheme: "xhsdiscover://", searchUrlTemplate: "xhsdiscover://search/result?keyword={query}"),
+            AppItem(id: "douyin", name: "抖音", iconName: "play.circle.fill", color: .black, urlScheme: "snssdk1128://", searchUrlTemplate: "snssdk1128://search?q={query}"),
+            AppItem(id: "wechat", name: "微信", iconName: "message.fill", color: .green, urlScheme: "weixin://", searchUrlTemplate: "weixin://dl/officialaccounts?search={query}"),
             AppItem(id: "bilibili", name: "哔哩哔哩", iconName: "tv.fill", color: .pink, urlScheme: "bilibili://", searchUrlTemplate: "bilibili://search?keyword={query}"),
             AppItem(id: "zhihu", name: "知乎", iconName: "questionmark.circle.fill", color: .blue, urlScheme: "zhihu://", searchUrlTemplate: "zhihu://search?q={query}"),
-            AppItem(id: "weibo", name: "微博", iconName: "eye.fill", color: .orange, urlScheme: "sinaweibo://", searchUrlTemplate: nil)
+            AppItem(id: "weibo", name: "微博", iconName: "eye.fill", color: .orange, urlScheme: "sinaweibo://", searchUrlTemplate: "sinaweibo://search?q={query}"),
         ]
     }
     
     private func updateSuggestions(for text: String) {
-        guard !text.isEmpty else { suggestedApps = []; return }
-        suggestedApps = savedApps.sorted { relevanceScore(for: $0, query: text) > relevanceScore(for: $1, query: text) }
+        guard !text.isEmpty else { 
+            suggestedApps = []
+            currentClassification = nil
+            return
+        }
+        
+        // 进行实体分类
+        let classification = classifier.classify(text)
+        currentClassification = classification
+        
+        // 根据分类结果排序推荐 App
+        suggestedApps = classifier.getSuggestedApps(for: classification, from: savedApps)
+        
+        // 如果没有分类结果，使用原有的关键词匹配逻辑作为 fallback
+        if classification.type == .unknown {
+            suggestedApps = savedApps.sorted { relevanceScore(for: $0, query: text) > relevanceScore(for: $1, query: text) }
+        }
     }
     
     private func relevanceScore(for app: AppItem, query: String) -> Double {

@@ -13,6 +13,7 @@
 		AA000004 /* AddAppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000014 /* AddAppView.swift */; };
 		AA000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000015 /* Assets.xcassets */; };
 		AA000006 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000016 /* Preview Assets.xcassets */; };
+		AA000007 /* EntityClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000018 /* EntityClassifier.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 		AA000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA000016 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		AA000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AA000018 /* EntityClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityClassifier.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +62,7 @@
 				AA000012 /* ContentView.swift */,
 				AA000013 /* SearchViewModel.swift */,
 				AA000014 /* AddAppView.swift */,
+				AA000018 /* EntityClassifier.swift */,
 				AA000015 /* Assets.xcassets */,
 				AA000032 /* Preview Content */,
 				AA000017 /* Info.plist */,
@@ -149,6 +152,7 @@
 				AA000002 /* ContentView.swift in Sources */,
 				AA000003 /* SearchViewModel.swift in Sources */,
 				AA000004 /* AddAppView.swift in Sources */,
+				AA000007 /* EntityClassifier.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
