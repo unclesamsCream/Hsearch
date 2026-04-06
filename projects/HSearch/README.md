@@ -71,7 +71,7 @@ HSearch/
 - [x] 拟物化 UI 设计
 - [x] App Store 图标获取
 - [x] 实体分类器（品牌/地点/人物）
-- [ ] 真机测试
+- [x] 真机测试 ✅ (2026-04-06)
 - [ ] TestFlight 分发
 - [ ] App Store 上架
 
